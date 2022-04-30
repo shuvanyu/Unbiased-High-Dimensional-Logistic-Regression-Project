@@ -18,7 +18,7 @@ torch.manual_seed(1)
 # Step 4 - Finally draw Y ~ Bernoulli(proba)
 ############################################################################
 
-ratio = 0.2    # p/n
+ratio = 0.34    # p/n Works in Closed Interval [0.06, 0.34]
 # p  = Number of features
 # m = Number of samples
 n = 4000
@@ -26,7 +26,7 @@ p = int(ratio*n)
 gamma = np.sqrt(5)
 
 mu = torch.zeros(p)
-x = torch.randn(p,n)*0.009
+x = torch.randn(p,n)*9e-3
 cov = torch.cov(x)
 
 x_dist = MultivariateNormal(loc = mu, covariance_matrix = cov)
