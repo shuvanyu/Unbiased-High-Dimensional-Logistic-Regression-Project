@@ -2,6 +2,7 @@ import torch
 import numpy as np
 from torch.distributions.multivariate_normal import MultivariateNormal
 from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
 
 ## Data Generating Process #################################################
 # The data generating process is parameterized by gamma, ratio, n
@@ -46,5 +47,10 @@ def normalizing_flow(X_train, X_test):
         X_train_flow[row,:] = X_train[row,:] + u * torch.sigmoid(w.dot(X_train[row,:]) + b)
     for row in range(n_test):
         X_test_flow[row,:] = X_test[row,:] + u * torch.sigmoid(w.dot(X_test[row,:]) + b)
+
+    # Normalize data
+    scaler = StandardScaler()
+    X_train_flow = torch.from_numpy(scaler.fit_transform(X_train_flow.numpy()))
+    X_test_flow = torch.from_numpy(scaler.fit_transform(X_test_flow.numpy()))
 
     return X_train_flow, X_test_flow

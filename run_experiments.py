@@ -12,7 +12,7 @@ torch.manual_seed(1)
 ratio = 0.2    # p/n
 # p  = Number of features
 # n = Number of samples
-n = 1000
+n = 3000
 p = int(ratio*n)
 gamma = np.sqrt(5)
 
@@ -23,6 +23,8 @@ print("TEST 1: Simulated Gaussian data")
 
 # Simulate Gaussian data
 X_train, X_test, y_train, y_test = simulate_gaussian(ratio, n, p, gamma)
+#y_train = torch.round(torch.rand(y_train.shape[0]))
+#y_test = torch.round(torch.rand(y_test.shape[0]))
 
 # Test with baseline model
 p_vals_baseline, pred_ints_baseline = test_baseline(X_train.numpy(), y_train.numpy(), X_test.numpy(), ci=ci)
