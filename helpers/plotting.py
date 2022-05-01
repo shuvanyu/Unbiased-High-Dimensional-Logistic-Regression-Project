@@ -38,12 +38,12 @@ def plot_conf_ints(pred_ints_baseline, pred_ints_sloe, X_test, y_test, title, fi
         # Baseline CI
         lower_ci_baseline = pred_ints_baseline[row_idx,0]
         upper_ci_baseline = pred_ints_baseline[row_idx,1]
-        plt.plot((lower_ci_baseline,upper_ci_baseline),(i,i),'b|-',color='blue')
+        plt.plot((lower_ci_baseline,upper_ci_baseline),(i-0.05,i-0.05),'b|-',color='blue')
 
         # SLOE CI
         lower_ci_sloe = pred_ints_sloe[row_idx,0]
         upper_ci_sloe = pred_ints_sloe[row_idx,1]
-        plt.plot((lower_ci_sloe,upper_ci_sloe),(i,i),'r|-',color='orange')
+        plt.plot((lower_ci_sloe,upper_ci_sloe),(i+0.05,i+0.05),'r|-',color='orange')
         
     plt.yticks([])
     plt.ylabel('Example')
