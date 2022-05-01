@@ -28,3 +28,23 @@ def simulate_gaussian(ratio, n, p, gamma):
     X_train, X_test, y_train, y_test = train_test_split(X, y, shuffle=True, train_size=0.8, random_state=0)
 
     return X_train, X_test, y_train, y_test
+
+def normalizing_flow(X_train, X_test):
+    X_train_flow = torch.zeros(X_train.shape[0], X_train.shape[1])
+    X_test_flow = torch.zeros(X_test.shape[0], X_test.shape[1])
+
+    n_train = X_train.shape[0]
+    n_test = X_test.shape[0]
+    p = X_train.shape[1]
+
+    u = 5
+    w = torch.rand(p)*30
+    b = 0.01
+    # h is sigmoid function
+
+    for row in range(n_train):
+        X_train_flow[row,:] = X_train[row,:] + u * torch.sigmoid(w.dot(X_train[row,:]) + b)
+    for row in range(n_test):
+        X_test_flow[row,:] = X_test[row,:] + u * torch.sigmoid(w.dot(X_test[row,:]) + b)
+
+    return X_train_flow, X_test_flow

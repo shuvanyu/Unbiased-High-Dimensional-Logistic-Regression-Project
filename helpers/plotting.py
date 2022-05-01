@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 from matplotlib.pyplot import figure
 import matplotlib.lines as mlines
 import numpy as np
+from helpers.simulation import normalizing_flow
 
 def plot_p_vals(p_vals_baseline, p_vals_sloe, title, filename):
     fig, ax = plt.subplots(1, 2, figsize=(10,5))
@@ -55,3 +56,9 @@ def plot_conf_ints(pred_ints_baseline, pred_ints_sloe, X_test, y_test, title, fi
     plt.tight_layout()
     plt.savefig('results/{}_CIs.jpg'.format(filename))
     plt.clf()
+
+def test_normalizing_flow(X_train, X_test):
+    plt.clf()
+    X_train_flow, X_test_flow = normalizing_flow(X_train, X_test)
+    plt.hist(X_train_flow[:,10].numpy(), bins=50)
+    plt.show()
