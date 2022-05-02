@@ -1,68 +1,76 @@
 import torch
 import numpy as np
-import matplotlib.pyplot as plt
-from helpers.simulation import simulate_gaussian, normalizing_flow, simulate_latent_gaussian
-from helpers.plotting import plot_p_vals, plot_conf_ints, test_normalizing_flow
-from helpers.models_test import test_baseline, test_sloe
+import pandas as pd
+from helpers.simulation import run_test
+from helpers.heart_data import retrieve_heart_data
 import warnings
 warnings.filterwarnings('ignore')
 np.random.seed(1)
 torch.manual_seed(1)
 
-ratio = 0.2    # p/n
-# p  = Number of features
-# n = Number of samples
-n = 3000
-p = int(ratio*n)
+# SIMULATED DATA TESTS
+print('SIMULATED DATA TESTS')
+ratios = [0.1, 0.2]
+n_vals = [500, 1000, 5000]
 gamma = np.sqrt(5)
-
 ci = 90
 
-# TEST 1: Simulated Gaussian data
-print("TEST 1: Simulated Gaussian data")
+# To store F1 scores
+scores = []
 
-# Simulate Gaussian data
-X_train, X_test, y_train, y_test = simulate_gaussian(ratio, n, p, gamma)
+for ratio in ratios:
+    for n in n_vals:
+        print('Trials for: n={}, ratio={}'.format(n, ratio))
+        p = int(ratio*n)
+        # TEST 1: Simulated Gaussian data
+        print("TEST 1: Simulated Gaussian data")
 
-# Test with baseline model
-p_vals_baseline, pred_ints_baseline = test_baseline(X_train.numpy(), y_train.numpy(), X_test.numpy(), ci=ci)
+        test_res = run_test(ratio, n, p, ci, 'Simulated Gaussian', 'gaussian', gamma=gamma)
+        scores.append(test_res)
 
-# Test with SLOE Model
-p_vals_sloe, pred_ints_sloe = test_sloe(X_train.numpy(), y_train.numpy(), X_test.numpy(), ci=ci)
+        # TEST 2: Simulated Non-Gaussian data
+        print('TEST 2: Simulated Non-Gaussian data')
 
-# Generate plots
-plot_p_vals(p_vals_baseline, p_vals_sloe, 'Simulated Gaussian', 'gaussian')
-plot_conf_ints(pred_ints_baseline, pred_ints_sloe, X_test.numpy(), y_test.numpy(), 'Simulated Gaussian', 'gaussian', ci=ci)
+        test_res = run_test(ratio, n, p, ci, 'Simulated Non-Gaussian', 'non_gaussian', gamma=gamma)
+        scores.append(test_res)
 
-# TEST 2: Simulated Non-Gaussian data
-print('TEST 2: Simulated Non-Gaussian data')
+        # TEST 3: Latent Variables
+        print('TEST 3: Latent Variables')
 
-# Simulate Non-Gaussian data with normalizing flow
-X_train_flow, X_test_flow = normalizing_flow(X_train, X_test)
+        test_rest = run_test(ratio, n, p, ci, 'Simulated Latent', 'latent', gamma=gamma)
+        scores.append(test_res)
 
-# Test with baseline model
-p_vals_baseline, pred_ints_baseline = test_baseline(X_train_flow.numpy(), y_train.numpy(), X_test_flow.numpy(), ci=ci)
+        # TEST 4: Heavy tailed Gaussian (Cauchy)
+        print('TEST 4: Heavy Tailed Gaussian (Cauchy)')
 
-# Test with SLOE Model
-p_vals_sloe, pred_ints_sloe = test_sloe(X_train_flow.numpy(), y_train.numpy(), X_test_flow.numpy(), ci=ci)
+        test_res = run_test(ratio, n, p, ci, 'Simulated Heavy-tailed distribution','heavy', gamma=gamma)
+        scores.append(test_res)
 
-# Generate plots
-plot_p_vals(p_vals_baseline, p_vals_sloe, 'Simulated Non-Gaussian', 'non_gaussian')
-plot_conf_ints(pred_ints_baseline, pred_ints_sloe, X_test_flow.numpy(), y_test.numpy(), 'Simulated Non-Gaussian', 'non_gaussian', ci=ci)
+# Write scores to file
+scores_df = pd.DataFrame(scores)
+print('Final Scores')
+print(scores_df)
+scores_df.to_csv('results/simulated_scores.csv', index=False)
 
-# TEST 3: Latent Variables
-print('TEST 3: Latent Variables')
-latent_ratio = 0.8
+# HEART DISEASE DATA
+print('HEART DISEASE DATA TESTS')
+scores = []
+sampling_ratios = [0.33, 0.4, 0.58]
 
-# We will calculate the covariates as linear functions of 3 Gaussian latent variables
-X_train_latent, X_test_latent, y_train_latent, y_test_latent = simulate_latent_gaussian(ratio, n, p, gamma, latent_ratio)
+for sampling_ratio in sampling_ratios:
+    heart_df = retrieve_heart_data(sampling_ratio)
+    n = heart_df.shape[0]
+    p = heart_df.shape[1]-6
+    ratio = np.around(p / float(n), decimals=2)
+    print('Trials for: n={}, ratio={}'.format(n, ratio))
 
-# Test with baseline model
-p_vals_baseline, pred_ints_baseline = test_baseline(X_train_latent.numpy(), y_train_latent.numpy(), X_test_latent.numpy(), ci=ci)
+    y = torch.tensor(heart_df.pop('prediction').astype(float).to_numpy())
+    X = torch.tensor(heart_df.astype(float).to_numpy())[:,:15]
+    test_res = run_test(ratio, n, p, ci, 'Heart Disease Data', 'heart', X=X, y=y)
+    scores.append(test_res)
 
-# Test with SLOE Model
-p_vals_sloe, pred_ints_sloe = test_sloe(X_train_latent.numpy(), y_train_latent.numpy(), X_test_latent.numpy(), ci=ci)
-
-# Generate plots
-plot_p_vals(p_vals_baseline, p_vals_sloe, 'Simulated Latent', 'latent')
-plot_conf_ints(pred_ints_baseline, pred_ints_sloe, X_test_latent.numpy(), y_test_latent.numpy(), 'Simulated Latent', 'latent', ci=ci)
+# Write scores to file
+scores_df = pd.DataFrame(scores)
+print('Final Scores')
+print(scores_df)
+scores_df.to_csv('results/heart_disease_scores.csv', index=False)

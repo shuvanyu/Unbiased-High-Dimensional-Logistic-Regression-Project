@@ -2,9 +2,8 @@ import matplotlib.pyplot as plt
 from matplotlib.pyplot import figure
 import matplotlib.lines as mlines
 import numpy as np
-from helpers.simulation import normalizing_flow
 
-def plot_p_vals(p_vals_baseline, p_vals_sloe, title, filename):
+def plot_p_vals(p_vals_baseline, p_vals_sloe, title, filename, n, ratio):
     fig, ax = plt.subplots(1, 2, figsize=(10,5))
     
     ax[0].hist(p_vals_baseline, bins=20, density=True)
@@ -19,12 +18,12 @@ def plot_p_vals(p_vals_baseline, p_vals_sloe, title, filename):
     ax[1].set_ylabel('Frequency')
     ax[1].set_title('Corrected')
     
-    fig.suptitle('{} p-values'.format(title))
+    fig.suptitle('{} p-values (n={}, ratio={})'.format(title, n, ratio))
     plt.tight_layout()
-    plt.savefig('results/{}_p_vals.jpg'.format(filename))
+    plt.savefig('results/{}_{}_{}_p_vals.jpg'.format(filename, n, ratio))
     plt.clf()
 
-def plot_conf_ints(pred_ints_baseline, pred_ints_sloe, X_test, y_test, title, filename, ci=90):
+def plot_conf_ints(pred_ints_baseline, pred_ints_sloe, X_test, y_test, title, filename, n, ratio, ci=90):
     figure(figsize=(8, 6))
     #Sample from test set for CI
     num_samples = 8
@@ -48,17 +47,11 @@ def plot_conf_ints(pred_ints_baseline, pred_ints_sloe, X_test, y_test, title, fi
     plt.yticks([])
     plt.ylabel('Example')
     plt.xlabel('Probability')
-    plt.title('{} Confidence Intervals'.format(title))
+    plt.title('{} Confidence Intervals (n={}, ratio={})'.format(title, n, ratio))
     observed_patch = mlines.Line2D([],[],color='black', marker='*', linestyle='None', label='Observed Outcome')
     standard_patch = mlines.Line2D([],[],color='blue', marker='|',label='Standard {}% CI'.format(ci))
     corrected_patch = mlines.Line2D([],[],color='orange', marker='|',label='Corrected {}% CI'.format(ci))
     plt.legend(handles=[observed_patch, standard_patch, corrected_patch])
     plt.tight_layout()
-    plt.savefig('results/{}_CIs.jpg'.format(filename))
+    plt.savefig('results/{}_{}_{}_CIs.jpg'.format(filename, n, ratio))
     plt.clf()
-
-def test_normalizing_flow(X_train, X_test):
-    plt.clf()
-    X_train_flow, X_test_flow = normalizing_flow(X_train, X_test)
-    plt.hist(X_train_flow[:,10].numpy(), bins=50)
-    plt.show()
