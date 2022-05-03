@@ -22,7 +22,7 @@ def test_baseline(X_train, y_train, X_test, y_test, ci=95):
         print('Baseline test failed: Singular matrix')
         return None, None, None, None
     # Get p values for coefficents
-    p_vals = lr.pvalues
+    p_vals = lr.pvalues[X_train.shape[1]//4:]
     
     # Calculate the prediction intervals
     logits = X_test.dot(lr.params.T).reshape(-1)
@@ -63,7 +63,7 @@ def test_sloe(X_train, y_train, X_test, y_test, ci=95):
         print('SLOE Test failed: Singular matrix')
         return None, None, None, None
     # Get p-values for coefficients
-    p_vals = model.p_values()
+    p_vals = model.p_values()[X_train.shape[1]//4:]
 
     # Get prediction CI for the sample
     pred_ints = model.prediction_intervals(X_test)

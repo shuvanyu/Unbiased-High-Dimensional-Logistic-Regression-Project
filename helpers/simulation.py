@@ -41,30 +41,40 @@ def simulate_gaussian(ratio, n, p, gamma):
 
     return X_train, X_test, y_train, y_test
 
-def normalizing_flow(X_train, X_test):
-    X_train_flow = torch.zeros(X_train.shape[0], X_train.shape[1])
-    X_test_flow = torch.zeros(X_test.shape[0], X_test.shape[1])
+def normalizing_flow(ratio, n, p, gamma):
+    # Simulate Gaussian data
+    mu = torch.zeros(p)
+    x = torch.randn(p,n)*0.009
+    cov = torch.cov(x)
 
-    n_train = X_train.shape[0]
-    n_test = X_test.shape[0]
-    p = X_train.shape[1]
-
+    x_dist = MultivariateNormal(loc = mu, covariance_matrix = cov)
+    X = x_dist.sample([n,])
+    
+    # Transform it using normalizing flow
+    X_flow = torch.zeros(n, p)
     u = 5
     w = torch.rand(p)*30
     b = 0.01
     # h is sigmoid function
 
-    for row in range(n_train):
-        X_train_flow[row,:] = X_train[row,:] + u * torch.sigmoid(w.dot(X_train[row,:]) + b)
-    for row in range(n_test):
-        X_test_flow[row,:] = X_test[row,:] + u * torch.sigmoid(w.dot(X_test[row,:]) + b)
+    for row in range(n):
+        X_flow[row,:] = X[row,:] + u * torch.sigmoid(w.dot(X[row,:]) + b)
 
     # Normalize data
     scaler = StandardScaler()
-    X_train_flow = torch.from_numpy(scaler.fit_transform(X_train_flow.numpy()))
-    X_test_flow = torch.from_numpy(scaler.fit_transform(X_test_flow.numpy()))
+    X_flow = torch.from_numpy(scaler.fit_transform(X_flow.numpy()))
 
-    return X_train_flow, X_test_flow
+    # Generate y
+    beta = torch.zeros(p)
+    beta[:p//8] = 2*gamma/np.sqrt(p)
+    beta[p//8:p//4] = -2*gamma/np.sqrt(p)
+
+    proba = torch.sigmoid(torch.matmul(X_flow,beta))
+    y_flow = torch.bernoulli(proba)
+
+    X_train, X_test, y_train, y_test = train_test_split(X_flow, y_flow, shuffle=True, train_size=0.8, random_state=0)
+
+    return X_train, X_test, y_train, y_test
 
 def simulate_latent_gaussian(ratio, n, p, gamma):
     latent_ratio = 0.8
@@ -132,8 +142,10 @@ def simulate_cauchy(ratio, n, p, gamma):
     return X_train, X_test, y_train, y_test
 
 def run_test(ratio, n, p, ci, title, type, gamma=np.sqrt(5), X=None, y=None):
-    if type == 'gaussian' or type == 'non_gaussian':
+    if type == 'gaussian':
         func = simulate_gaussian
+    elif type == 'non_gaussian':
+        func = normalizing_flow
     elif type == 'latent':
         func = simulate_latent_gaussian
     elif type == 'heavy':
@@ -142,9 +154,6 @@ def run_test(ratio, n, p, ci, title, type, gamma=np.sqrt(5), X=None, y=None):
     if type != 'heart':
         # Simulate data
         X_train, X_test, y_train, y_test = func(ratio, n, p, gamma)
-
-        if type == 'non_gaussian':
-            X_train, X_test = normalizing_flow(X_train, X_test)
     else:
         X_train, X_test, y_train, y_test = train_test_split(X, y, shuffle=True, train_size=0.8, random_state=0)
 
