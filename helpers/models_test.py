@@ -5,6 +5,8 @@ import statsmodels.api as sm
 import scipy
 from sklearn.metrics import f1_score
 import time
+np.random.seed(1)
+torch.manual_seed(1)
 
 def probs_to_labels(y_probs):
     labels = []
@@ -16,7 +18,7 @@ def probs_to_labels(y_probs):
 def test_baseline(X_train, y_train, X_test, y_test, ci=95):
     try:
         start = time.time()
-        lr = sm.Logit(y_train, X_train).fit()
+        lr = sm.Logit(y_train, X_train).fit(maxiter=60)
         end = time.time()
     except np.linalg.LinAlgError:
         print('Baseline test failed: Singular matrix')
@@ -58,12 +60,15 @@ def test_sloe(X_train, y_train, X_test, y_test, ci=95):
         end = time.time()
     except ValueError:
         print('SLOE Test failed.')
-        return None, None, None, None
+        return None, None, None, None, None
     except np.linalg.LinAlgError:
         print('SLOE Test failed: Singular matrix')
-        return None, None, None, None
+        return None, None, None, None, None
     # Get p-values for coefficients
     p_vals = model.p_values()[X_train.shape[1]//4:]
+
+    # Get logit inflation alpha
+    alpha = model.alpha
 
     # Get prediction CI for the sample
     pred_ints = model.prediction_intervals(X_test)
@@ -77,4 +82,4 @@ def test_sloe(X_train, y_train, X_test, y_test, ci=95):
     # Get time taken to fit
     performance = end - start
 
-    return p_vals, pred_ints, score, performance
+    return p_vals, alpha, pred_ints, score, performance
