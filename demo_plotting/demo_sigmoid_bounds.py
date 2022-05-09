@@ -20,4 +20,3 @@ plt.title(r'Plot showing the range of $\beta^TX_i $ after scaling')
 plt.grid()
 plt.savefig('demo_plotting/plots/sigmoid.pdf')
 plt.savefig('demo_plotting/plots/sigmoid.jpg')
-plt.show

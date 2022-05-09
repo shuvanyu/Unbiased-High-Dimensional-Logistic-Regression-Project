@@ -3,6 +3,7 @@ from torch.distributions.normal import Normal
 import numpy as np
 import statsmodels.api as sm
 import matplotlib.pyplot as plt
+import matplotlib.lines as mlines
 
 p = 800 # Number of features
 n = 4000
@@ -17,8 +18,6 @@ beta = torch.zeros(p)
 beta[:p//8] = 10
 beta[p//8:p//4] = -10
 
-print(torch.matmul(x_samples,beta).var())
-
 proba = torch.sigmoid(torch.matmul(x_samples,beta))
 y = torch.bernoulli(proba)
 lr = sm.Logit(y.numpy(), x_samples.numpy()).fit()
@@ -30,12 +29,13 @@ plt.plot((p//4,p),(0,0),'-',color='black', linewidth=3)
 plt.title('The parameters of logistic regression for $p=800, n=4000$')
 plt.xlabel('Index')
 plt.ylabel('Coefficients (true and MLE fitted)')
-plt.legend(['Coefficients using MLE estimation','True coefficients'])
+est_patch = mlines.Line2D([],[],color='red', marker='.', markersize=3, linestyle='None', label='Coefficients using MLE estimation')
+true_patch = mlines.Line2D([],[],color='black', marker='_',label='True coefficients')
+plt.legend(handles=[est_patch, true_patch])
 
 plt.grid()
 plt.savefig('demo_plotting/plots/bias.pdf')
 plt.savefig('demo_plotting/plots/bias.jpg')
-plt.show()
 
 
 
